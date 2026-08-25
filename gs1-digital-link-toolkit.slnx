@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Gs1.DigitalLink.Tests/Gs1.DigitalLink.Tests.csproj" />
+  <Project Path="Gs1.DigitalLink/Gs1.DigitalLink.csproj" />
+</Solution>
