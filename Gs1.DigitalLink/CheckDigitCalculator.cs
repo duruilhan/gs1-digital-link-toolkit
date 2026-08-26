@@ -2,52 +2,61 @@
 {
     public static class CheckDigitCalculator
     {
+        private static readonly HashSet<int> ValidLengths = [8, 12, 13, 14, 18];
         public static int Calculate(string digitsWithoutCheckDigit)
         {
-            if (digitsWithoutCheckDigit.Length != 12)
-            {
-                throw new ArgumentException("Input must contain exactly 12 digits.");
-            }
+            ArgumentNullException.ThrowIfNull(digitsWithoutCheckDigit);
 
+            if (!ValidLengths.Contains(digitsWithoutCheckDigit.Length + 1))
+            {
+                throw new ArgumentException("Input has an unsupported length.");
+            }
+            if (!digitsWithoutCheckDigit.All(char.IsDigit))
+            {
+                throw new ArgumentException("Input must contain only digits.");
+            }
             int sum = 0;
-
-            for (int i = 0; i < digitsWithoutCheckDigit.Length; i++)
+            int weight = 3;
+            for (int i = digitsWithoutCheckDigit.Length - 1; i >= 0; i--)
             {
-                char character = digitsWithoutCheckDigit[i];
-
-                if (!char.IsDigit(character))
-                {
-                    throw new ArgumentException("Input must contain only digits.");
-                }
-
-                int digit = character - '0';
-                int weight = i % 2 == 0 ? 1 : 3;
-
+                int digit = digitsWithoutCheckDigit[i] - '0';
                 sum += digit * weight;
+                weight = weight == 3 ? 1 : 3;
             }
-
             return (10 - sum % 10) % 10;
         }
         public static bool IsValid(string value)
         {
-            if (value.Length != 13)
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (!ValidLengths.Contains(value.Length))
             {
-                return false;
+                throw new ArgumentException("Input has an unsupported length.");
             }
-
-            for (int i = 0; i < value.Length; i++)
+            if (!value.All(char.IsDigit))
             {
-                if (!char.IsDigit(value[i]))
-                {
-                    return false;
-                }
+                throw new ArgumentException("Input must contain only digits.");
             }
-
-            string firstTwelveDigits = value[..12];
-            int expectedCheckDigit = Calculate(firstTwelveDigits);
-            int actualCheckDigit = value[12] - '0';
-
+            string digitsWithoutCheckDigit = value[..^1];
+            int expectedCheckDigit = Calculate(digitsWithoutCheckDigit);
+            int actualCheckDigit = value[^1] - '0';
             return expectedCheckDigit == actualCheckDigit;
+        }
+        public static IReadOnlyList<Gs1KeyType> GetPossibleKeyTypes(string value)
+        {
+            if (!IsValid(value))
+            {
+                return [];
+            }
+            return value.Length switch
+            {
+                8 => [Gs1KeyType.Gtin8],
+                12 => [Gs1KeyType.Gtin12],
+                13 => [Gs1KeyType.Gtin13, Gs1KeyType.Gln],
+                14 => [Gs1KeyType.Gtin14],
+                18 => [Gs1KeyType.Sscc],
+                _ => []
+            };
         }
     }
 }
