@@ -57,19 +57,24 @@ namespace Gs1.DigitalLink.Tests
                 CheckDigitCalculator.GetPossibleKeyTypes(input);
             Assert.Equal([Gs1KeyType.Gtin13, Gs1KeyType.Gln], result);
         }
-        [Fact]
-        public void IsValid_WithUnsupportedLength_ThrowsArgumentException()
+        [Theory]
+        [InlineData("12345")]
+        [InlineData("869O504080008")]
+        public void IsValid_WithMalformedInput_ReturnsFalse(string input)
         {
-            string input = "12345";
-            Assert.Throws<ArgumentException>(
-                () => CheckDigitCalculator.IsValid(input));
+            Assert.False(CheckDigitCalculator.IsValid(input));
         }
         [Fact]
-        public void IsValid_WithNonDigitCharacter_ThrowsArgumentException()
+        public void IsValid_WithNull_ReturnsFalse()
         {
-            string input = "869O504080008";
-            Assert.Throws<ArgumentException>(
-                () => CheckDigitCalculator.IsValid(input));
+            Assert.False(CheckDigitCalculator.IsValid(null));
+        }
+        [Theory]
+        [InlineData("12345")]
+        [InlineData("869O504080008")]
+        public void GetPossibleKeyTypes_WithMalformedInput_ReturnsEmpty(string input)
+        {
+            Assert.Empty(CheckDigitCalculator.GetPossibleKeyTypes(input));
         }
         [Theory]
         [InlineData("1234")]
