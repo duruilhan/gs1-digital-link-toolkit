@@ -32,7 +32,6 @@ namespace Gs1.DigitalLink.Tests
         public void IsValid_WithIncorrectCheckDigit_ReturnsFalse(string input)
         {
             bool result = CheckDigitCalculator.IsValid(input);
-
             Assert.False(result);
         }
         [Theory]

@@ -1,5 +1,6 @@
 using System.Text.Json;
-namespace Gs1.DigitalLink;
+namespace Gs1.DigitalLink
+{
 public static class ApplicationIdentifierCatalog
 {
     private static readonly Lazy<IReadOnlyDictionary<string, ApplicationIdentifierDefinition>> Definitions =
@@ -23,4 +24,5 @@ public static class ApplicationIdentifierCatalog
             ?? throw new InvalidOperationException("Application Identifier definitions could not be loaded.");
         return definitions.ToDictionary(definition => definition.Code, StringComparer.Ordinal);
     }
+}
 }

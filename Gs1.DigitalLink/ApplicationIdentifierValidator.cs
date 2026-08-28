@@ -1,21 +1,28 @@
-namespace Gs1.DigitalLink;
+namespace Gs1.DigitalLink
+{
 public static class ApplicationIdentifierValidator
 {
+    private const string Cset82Punctuation = "!\"%&'()*+,-./:;<=>?_";
+
     public static bool IsValid(string? aiCode, string? value)
     {
         if (value is null || !ApplicationIdentifierCatalog.TryGet(aiCode, out var definition))
         {
             return false;
         }
-        return definition!.Format switch
+        bool hasValidLength = value.Length >= definition!.MinLength &&
+                              value.Length <= definition.MaxLength;
+        bool hasValidCharacters = definition.IsNumeric
+            ? value.All(char.IsDigit)
+            : value.All(IsCset82Character);
+
+        if (!hasValidLength || !hasValidCharacters)
         {
-            ['N', .. var length] when int.TryParse(length, out int exactLength) =>
-                value.Length == exactLength && value.All(char.IsDigit),
-            ['X', '.', '.', .. var maximum] when int.TryParse(maximum, out int maximumLength) =>
-                value.Length is > 0 && value.Length <= maximumLength && value.All(IsTemporaryCset82Character),
-            _ => false
-        };
+            return false;
+        }
+        return !definition.HasCheckDigit || CheckDigitCalculator.IsValid(value);
     }
-    private static bool IsTemporaryCset82Character(char character) =>
-        char.IsAsciiLetterOrDigit(character) || character == '-';
+    private static bool IsCset82Character(char character) =>
+        char.IsAsciiLetterOrDigit(character) || Cset82Punctuation.Contains(character);
+}
 }

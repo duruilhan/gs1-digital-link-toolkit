@@ -5,6 +5,7 @@ namespace Gs1.DigitalLink.Tests
     {
         [Theory]
         [InlineData("01", "08690504080008")]
+        [InlineData("00", "869012345123456784")]
         [InlineData("10", "LOT123")]
         [InlineData("17", "261231")]
         [InlineData("414", "8690123456789")]
@@ -21,6 +22,9 @@ namespace Gs1.DigitalLink.Tests
         [InlineData("17", "26123")]
         [InlineData("17", "2612A1")]
         [InlineData("10", "")]
+        [InlineData("01", "08690504080009")]
+        [InlineData("414", "8690123456780")]
+        [InlineData("00", "869012345123456785")]
         public void IsValid_WithNonMatchingValue_ReturnsFalse(
             string applicationIdentifier,
             string value)
@@ -36,7 +40,6 @@ namespace Gs1.DigitalLink.Tests
         public void Catalog_WithKnownApplicationIdentifier_ReturnsItsDefinition()
         {
             bool found = ApplicationIdentifierCatalog.TryGet("01", out var definition);
-
             Assert.True(found);
             Assert.NotNull(definition);
             Assert.Equal("01", definition.Code);
@@ -44,6 +47,9 @@ namespace Gs1.DigitalLink.Tests
             Assert.Equal("N14", definition.Format);
             Assert.True(definition.IsFixedLength);
             Assert.True(definition.HasCheckDigit);
+            Assert.True(definition.IsNumeric);
+            Assert.Equal(14, definition.MinLength);
+            Assert.Equal(14, definition.MaxLength);
         }
         [Fact]
         public void Catalog_WithUnknownApplicationIdentifier_ReturnsFalse()

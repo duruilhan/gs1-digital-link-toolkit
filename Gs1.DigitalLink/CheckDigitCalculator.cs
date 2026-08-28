@@ -2,7 +2,6 @@
 {
     public static class CheckDigitCalculator
     {
-        private static readonly HashSet<int> ValidLengths = [8, 12, 13, 14, 18];
         private static readonly IReadOnlyDictionary<int, IReadOnlyList<Gs1KeyType>> KeyTypesByLength =
             new Dictionary<int, IReadOnlyList<Gs1KeyType>>
             {
@@ -16,7 +15,7 @@
         {
             ArgumentNullException.ThrowIfNull(digitsWithoutCheckDigit);
 
-            if (!ValidLengths.Contains(digitsWithoutCheckDigit.Length + 1))
+            if (!KeyTypesByLength.ContainsKey(digitsWithoutCheckDigit.Length + 1))
             {
                 throw new ArgumentException("Input has an unsupported length.");
             }
@@ -36,7 +35,7 @@
         }
         public static bool IsValid(string? value)
         {
-            if (value is null || !ValidLengths.Contains(value.Length) || !value.All(char.IsDigit))
+            if (value is null || !KeyTypesByLength.ContainsKey(value.Length) || !value.All(char.IsDigit))
             {
                 return false;
             }
