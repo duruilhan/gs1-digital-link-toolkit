@@ -8,5 +8,6 @@
   { "code": "22", "title": "Consumer product variant (CPV)", "format": "X..20", "isFixedLength": false, "hasCheckDigit": false },
   { "code": "240", "title": "Additional product identification assigned by manufacturer", "format": "X..30", "isFixedLength": false, "hasCheckDigit": false },
   { "code": "414", "title": "Identification of a physical location (GLN)", "format": "N13", "isFixedLength": true, "hasCheckDigit": true },
-  { "code": "3103", "title": "Net weight, kg (3 decimal places)", "format": "N6", "isFixedLength": true, "hasCheckDigit": false }
+  { "code": "3103", "title": "Net weight, kg (3 decimal places)", "format": "N6", "isFixedLength": true, "hasCheckDigit": false },
+  { "code": "8018", "title": "GSRN Recipient", "format": "N18", "isFixedLength": false, "hasCheckDigit": true }
 ]

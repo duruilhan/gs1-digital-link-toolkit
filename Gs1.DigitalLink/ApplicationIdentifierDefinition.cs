@@ -17,10 +17,6 @@ public sealed record ApplicationIdentifierDefinition
         IsFixedLength = isFixedLength;
         HasCheckDigit = hasCheckDigit;
         (IsNumeric, MinLength, MaxLength) = ParseFormat(format);
-        if (IsFixedLength != (MinLength == MaxLength))
-        {
-            throw new InvalidDataException($"Format '{format}' conflicts with its fixed-length setting.");
-        }
     }
     public string Code { get; }
     public string Title { get; }

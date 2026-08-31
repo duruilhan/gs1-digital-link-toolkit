@@ -3,7 +3,6 @@ namespace Gs1.DigitalLink
 public static class ApplicationIdentifierValidator
 {
     private const string Cset82Punctuation = "!\"%&'()*+,-./:;<=>?_";
-
     public static bool IsValid(string? aiCode, string? value)
     {
         if (value is null || !ApplicationIdentifierCatalog.TryGet(aiCode, out var definition))
@@ -15,7 +14,6 @@ public static class ApplicationIdentifierValidator
         bool hasValidCharacters = definition.IsNumeric
             ? value.All(char.IsDigit)
             : value.All(IsCset82Character);
-
         if (!hasValidLength || !hasValidCharacters)
         {
             return false;
