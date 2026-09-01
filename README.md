@@ -4,7 +4,7 @@
 
 GS1 Digital Link connects GS1 identifiers, such as GTINs and GLNs, to web-accessible information and services. It allows standardized identifiers carried by barcodes to be used in digital applications without changing their meaning.
 
-This .NET library provides the foundations for working with those identifiers. It calculates and validates GS1 check digits, identifies possible GS1 key types by length, loads Application Identifier (AI) definitions from a JSON catalog, and validates AI values against their length, character-set, and check-digit rules.
+This .NET library provides the foundations for working with those identifiers. It calculates and validates GS1 check digits, identifies possible GS1 key types by length, loads Application Identifier (AI) definitions from a JSON catalog, validates AI values against their length, character-set, and check-digit rules, and parses parenthesized GS1 element strings into ordered AI/value pairs.
 
 ## Build and test
 
