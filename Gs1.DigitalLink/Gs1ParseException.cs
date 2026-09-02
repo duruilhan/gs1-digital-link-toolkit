@@ -7,7 +7,6 @@ namespace Gs1.DigitalLink
         {
             Position = position;
         }
-
         public int Position { get; }
     }
 }

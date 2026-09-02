@@ -14,6 +14,18 @@ public static class ApplicationIdentifierCatalog
         }
         return Definitions.Value.TryGetValue(code, out definition);
     }
+    internal static bool TryMatchPrefix(
+        string input,
+        int position,
+        out ApplicationIdentifierDefinition? definition)
+    {
+        definition = Definitions.Value.Values
+            .Where(candidate => position + candidate.Code.Length <= input.Length)
+            .OrderByDescending(candidate => candidate.Code.Length)
+            .FirstOrDefault(candidate => input.AsSpan(position).StartsWith(candidate.Code, StringComparison.Ordinal));
+
+        return definition is not null;
+    }
     private static IReadOnlyDictionary<string, ApplicationIdentifierDefinition> LoadDefinitions()
     {
         string path = Path.Combine(AppContext.BaseDirectory, "Data", "application-identifiers.json");

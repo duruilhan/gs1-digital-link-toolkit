@@ -31,7 +31,6 @@ namespace Gs1.DigitalLink.Tests
                 [new("240", "ABC-123")]
             }
         };
-
         [Theory]
         [MemberData(nameof(ValidElementStrings))]
         public void Parse_WithValidInput_ReturnsElementsInInputOrder(
@@ -42,7 +41,6 @@ namespace Gs1.DigitalLink.Tests
 
             Assert.Equal(expected, result);
         }
-
         [Theory]
         [MemberData(nameof(ValidElementStrings))]
         public void TryParse_WithValidInput_ReturnsTrueAndElements(
@@ -54,7 +52,6 @@ namespace Gs1.DigitalLink.Tests
             Assert.True(parsed);
             Assert.Equal(expected, result);
         }
-
         [Theory]
         [InlineData("01)08690504080008", 0)]
         [InlineData("(0108690504080008", 1)]
@@ -69,10 +66,8 @@ namespace Gs1.DigitalLink.Tests
         {
             Gs1ParseException exception = Assert.Throws<Gs1ParseException>(
                 () => Gs1ElementStringParser.Parse(input));
-
             Assert.Equal(expectedPosition, exception.Position);
         }
-
         [Theory]
         [InlineData("01)08690504080008")]
         [InlineData("(0108690504080008")]
@@ -85,17 +80,13 @@ namespace Gs1.DigitalLink.Tests
         {
             Exception? exception = Record.Exception(
                 () => Assert.False(Gs1ElementStringParser.TryParse(input, out var result)));
-
             Assert.Null(exception);
         }
-
         [Fact]
         public void Parse_WithDuplicateApplicationIdentifier_PreservesBothOccurrences()
         {
             const string input = "(01)08690504080008(01)08690504080008";
-
             IReadOnlyList<Gs1Element> result = Gs1ElementStringParser.Parse(input);
-
             Assert.Equal(2, result.Count);
             Assert.All(result, element => Assert.Equal("01", element.ApplicationIdentifier));
         }
