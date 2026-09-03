@@ -6,6 +6,8 @@ GS1 Digital Link connects GS1 identifiers, such as GTINs and GLNs, to web-access
 
 This .NET library provides the foundations for working with those identifiers. It calculates and validates GS1 check digits, identifies possible GS1 key types by length, loads Application Identifier (AI) definitions from a JSON catalog, validates AI values against their length, character-set, and check-digit rules, and parses both parenthesized and raw GS1 element strings into ordered AI/value pairs.
 
+It also builds uncompressed Digital Link URLs from validated AI/value pairs for the supported catalog. It is not a complete implementation of every GS1 AI or association rule.
+
 ## Build and test
 
 Requirements: [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and Git.
@@ -21,6 +23,34 @@ dotnet test --no-build
 Every push and pull request also runs the build and test suite through GitHub Actions.
 
 ## Design decisions
+
+### Building a Digital Link
+
+```csharp
+using Gs1.DigitalLink;
+
+string url = Gs1DigitalLinkBuilder.Build([
+    new Gs1Element("01", "08690504080008"),
+    new Gs1Element("10", "LOT123"),
+    new Gs1Element("17", "261231")
+]);
+// https://id.gs1.org/01/08690504080008/10/LOT123?17=261231
+
+string raw = "010869050408000810LOT123\u001D17261231";
+string fromBarcode = Gs1DigitalLinkBuilder.Build(Gs1RawElementStringParser.Parse(raw));
+```
+
+`Build` optionally accepts a custom absolute HTTP(S) base address, including a path prefix. Credentials, query strings and fragments are rejected in the base address. Invalid elements or combinations throw `ArgumentException`; a null element collection throws `ArgumentNullException`.
+
+The JSON catalog records each AI's `role`. Qualifiers also specify `qualifierFor` and `qualifierOrder`. Exactly one primary key is required. GTIN qualifiers are emitted in the order **22, 10, 21**, regardless of input order; missing qualifiers are skipped. Data attributes are emitted in ordinal AI-code order in the query string for deterministic output. The original input collection is not modified.
+
+Each value is encoded separately with `Uri.EscapeDataString`, so `A/B` becomes `A%2FB` and `50%` becomes `50%25`. The URL's structural separators are not encoded.
+
+### Why a GTIN qualifier cannot accompany a GLN
+
+For example, `414=8690123456789` with `10=LOT123` is rejected. AI 10 qualifies GTIN (01), not GLN (414). Moving it into the query string would silently change its catalog role; adding it to the path would imply an unsupported relationship. The same check applies to all catalog qualifiers and primary keys.
+
+Duplicate AI codes are rejected by the builder, even when the values match, to avoid ambiguous URLs. This is deliberately stricter than the parsers, which preserve repeated elements from their input.
 
 ### Why validation returns `false`
 
