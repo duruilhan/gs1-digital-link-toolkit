@@ -12,7 +12,7 @@ namespace Gs1.DigitalLink
             if (!Uri.TryCreate(baseAddress, UriKind.Absolute, out var root) ||
                 (root.Scheme != Uri.UriSchemeHttps && root.Scheme != Uri.UriSchemeHttp) ||
                 root.Query.Length != 0 || root.Fragment.Length != 0 || root.UserInfo.Length != 0)
-                throw new ArgumentException("Base address must be an absolute HTTP(S) URL without credentials, query or fragment.", nameof(baseAddress))
+                throw new ArgumentException("Base address must be an absolute HTTP(S) URL without credentials, query or fragment.", nameof(baseAddress));
             var entries = new List<(Gs1Element Element, ApplicationIdentifierDefinition Definition)>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var element in elements)
