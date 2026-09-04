@@ -12,8 +12,7 @@ namespace Gs1.DigitalLink
             if (!Uri.TryCreate(baseAddress, UriKind.Absolute, out var root) ||
                 (root.Scheme != Uri.UriSchemeHttps && root.Scheme != Uri.UriSchemeHttp) ||
                 root.Query.Length != 0 || root.Fragment.Length != 0 || root.UserInfo.Length != 0)
-                throw new ArgumentException("Base address must be an absolute HTTP(S) URL without credentials, query or fragment.", nameof(baseAddress));
-
+                throw new ArgumentException("Base address must be an absolute HTTP(S) URL without credentials, query or fragment.", nameof(baseAddress))
             var entries = new List<(Gs1Element Element, ApplicationIdentifierDefinition Definition)>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var element in elements)
@@ -35,8 +34,14 @@ namespace Gs1.DigitalLink
             if (qualifiers.Any(e => e.Definition.QualifierFor != primary.Element.ApplicationIdentifier))
                 throw new ArgumentException("A qualifier cannot be used with this primary key.", nameof(elements));
 
+            static string EscapePathValue(string value) => value switch
+            {
+                "." => "%2E",
+                ".." => "%2E%2E",
+                _ => Uri.EscapeDataString(value)
+            };
             static string PathPart(Gs1Element element) =>
-                $"/{Uri.EscapeDataString(element.ApplicationIdentifier)}/{Uri.EscapeDataString(element.Value)}";
+                $"/{Uri.EscapeDataString(element.ApplicationIdentifier)}/{EscapePathValue(element.Value)}";
             string url = root.AbsoluteUri.TrimEnd('/') + PathPart(primary.Element) +
                 string.Concat(qualifiers.Select(e => PathPart(e.Element)));
             var attributes = entries.Where(e => e.Definition.Role == ApplicationIdentifierRole.DataAttribute)

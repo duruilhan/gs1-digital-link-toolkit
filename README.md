@@ -38,6 +38,9 @@ string url = Gs1DigitalLinkBuilder.Build([
 
 string raw = "010869050408000810LOT123\u001D17261231";
 string fromBarcode = Gs1DigitalLinkBuilder.Build(Gs1RawElementStringParser.Parse(raw));
+
+IReadOnlyList<Gs1Element> elements = Gs1DigitalLinkParser.Parse(url);
+bool parsed = Gs1DigitalLinkParser.TryParse(url, out var safeElements);
 ```
 
 `Build` optionally accepts a custom absolute HTTP(S) base address, including a path prefix. Credentials, query strings and fragments are rejected in the base address. Invalid elements or combinations throw `ArgumentException`; a null element collection throws `ArgumentNullException`.
@@ -51,6 +54,17 @@ Each value is encoded separately with `Uri.EscapeDataString`, so `A/B` becomes `
 For example, `414=8690123456789` with `10=LOT123` is rejected. AI 10 qualifies GTIN (01), not GLN (414). Moving it into the query string would silently change its catalog role; adding it to the path would imply an unsupported relationship. The same check applies to all catalog qualifiers and primary keys.
 
 Duplicate AI codes are rejected by the builder, even when the values match, to avoid ambiguous URLs. This is deliberately stricter than the parsers, which preserve repeated elements from their input.
+
+### Parsing a Digital Link
+
+`Gs1DigitalLinkParser` provides `TryParse` for expected invalid input and `Parse` for callers that need a positional `Gs1ParseException`. It finds the first primary-key AI path segment, so deployment prefixes such as `https://example.com/dl/` are allowed. It decodes percent-encoded values and rejects unknown AIs, invalid values, misplaced data attributes, GTIN qualifiers used with another primary key, duplicates, and non-canonical qualifier order.
+
+The exact property `Parse(Build(x)) == x` does not hold when `x` is in a non-canonical order: the builder intentionally reorders GTIN qualifiers and data attributes. The round-trip guarantees are instead:
+
+- `Build(Parse(Build(x))) == Build(x)`
+- `Parse(Build(x)) == Canonicalize(x)`
+
+These properties are checked with 1,000 reproducible randomly generated valid element lists using a fixed seed. The generator deliberately varies both element presence and input order. Exact examples and invalid URLs remain as ordinary regression tests.
 
 ### Why validation returns `false`
 
