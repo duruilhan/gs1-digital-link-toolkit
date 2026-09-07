@@ -8,7 +8,6 @@ namespace Gs1.DigitalLink
             result = [];
             if (input is null)
                 return false;
-
             try
             {
                 result = ParseCore(input);
@@ -20,13 +19,11 @@ namespace Gs1.DigitalLink
                 return false;
             }
         }
-
         public static IReadOnlyList<Gs1Element> Parse(string input)
         {
             ArgumentNullException.ThrowIfNull(input);
             return ParseCore(input);
         }
-
         private static IReadOnlyList<Gs1Element> ParseCore(string input)
         {
             ValidatePercentEncoding(input);
@@ -34,7 +31,6 @@ namespace Gs1.DigitalLink
                 (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp) ||
                 uri.UserInfo.Length != 0 || uri.Fragment.Length != 0)
                 throw Error("Input must be an absolute HTTP(S) URL without credentials or fragment", 0);
-
             int authorityEnd = input.IndexOf('/', input.IndexOf("://", StringComparison.Ordinal) + 3);
             int queryStart = input.IndexOf('?');
             int pathEnd = queryStart >= 0 ? queryStart : input.Length;
@@ -44,7 +40,7 @@ namespace Gs1.DigitalLink
             string[] path = rawPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
             int primaryIndex = Array.FindIndex(path, encoded =>
             {
-                string code = Decode(encoded, input);
+                string code = ResolvePathCode(Decode(encoded, input));
                 return ApplicationIdentifierCatalog.TryGet(code, out var definition) &&
                     definition!.Role == ApplicationIdentifierRole.PrimaryKey;
             });
@@ -52,16 +48,16 @@ namespace Gs1.DigitalLink
                 throw Error("The path does not contain a primary key and value", 0);
             if ((path.Length - primaryIndex) % 2 != 0)
                 throw Error("Every path AI must have a value", input.Length);
-
             var result = new List<Gs1Element>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
             int previousQualifierOrder = 0;
-            string primaryCode = Decode(path[primaryIndex], input);
-
+            string primaryCode = ResolvePathCode(Decode(path[primaryIndex], input));
             for (int i = primaryIndex; i < path.Length; i += 2)
             {
-                string code = Decode(path[i], input);
+                string code = ResolvePathCode(Decode(path[i], input));
                 string value = Decode(path[i + 1], input);
+                if (code == "01" && value.Length == 12)
+                    value = value.PadLeft(14, '0');
                 if (!ApplicationIdentifierCatalog.TryGet(code, out var definition))
                     throw Error($"Unknown path AI '{code}'", FindPosition(input, path[i]));
                 if (i == primaryIndex)
@@ -80,7 +76,6 @@ namespace Gs1.DigitalLink
                 }
                 AddValidated(result, seen, code, value, input, path[i + 1]);
             }
-
             if (queryStart >= 0)
             {
                 string query = input[(queryStart + 1)..];
@@ -103,7 +98,6 @@ namespace Gs1.DigitalLink
             }
             return result;
         }
-
         private static void AddValidated(List<Gs1Element> result, HashSet<string> seen,
             string code, string value, string input, string encodedValue)
         {
@@ -113,12 +107,16 @@ namespace Gs1.DigitalLink
                 throw Error($"Invalid value for AI '{code}'", FindPosition(input, encodedValue));
             result.Add(new Gs1Element(code, value));
         }
-
         private static string Decode(string value, string input)
         {
             return Uri.UnescapeDataString(value);
         }
-
+        private static string ResolvePathCode(string token) => token switch
+        {
+            "gtin" => "01",
+            "lot" => "10",
+            _ => token
+        };
         private static void ValidatePercentEncoding(string input)
         {
             for (int i = 0; i < input.Length; i++)
@@ -126,10 +124,8 @@ namespace Gs1.DigitalLink
                     !Uri.IsHexDigit(input[i + 1]) || !Uri.IsHexDigit(input[i + 2])))
                     throw Error("Invalid percent encoding", i);
         }
-
         private static int FindPosition(string input, string value) =>
             Math.Max(0, input.IndexOf(value, StringComparison.Ordinal));
-
         private static Gs1ParseException Error(string message, int position) => new(message, position);
     }
 }

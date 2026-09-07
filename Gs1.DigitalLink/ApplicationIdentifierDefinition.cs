@@ -42,6 +42,12 @@ public sealed record ApplicationIdentifierDefinition
     public int MaxLength { get; }
     private static (bool IsNumeric, int MinLength, int MaxLength) ParseFormat(string format)
     {
+        if (format.StartsWith("N..", StringComparison.Ordinal) &&
+            int.TryParse(format[3..], out int maximumNumericLength) &&
+            maximumNumericLength > 0)
+        {
+            return (true, 1, maximumNumericLength);
+        }
         if (format.Length > 1 &&
             format[0] == 'N' &&
             int.TryParse(format[1..], out int exactLength) &&

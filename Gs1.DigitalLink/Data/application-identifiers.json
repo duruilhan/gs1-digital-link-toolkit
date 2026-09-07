@@ -9,5 +9,6 @@
   {"code":"240","title":"Additional product identification assigned by manufacturer","format":"X..30","isFixedLength":false,"hasCheckDigit":false,"role":"DataAttribute"},
   {"code":"414","title":"Identification of a physical location (GLN)","format":"N13","isFixedLength":true,"hasCheckDigit":true,"role":"PrimaryKey"},
   {"code":"3103","title":"Net weight, kg (3 decimal places)","format":"N6","isFixedLength":true,"hasCheckDigit":false,"role":"DataAttribute"},
+  {"code":"3923","title":"Applicable amount payable, single monetary area","format":"N..15","isFixedLength":false,"hasCheckDigit":false,"role":"DataAttribute"},
   {"code":"8018","title":"GSRN Recipient","format":"N18","isFixedLength":false,"hasCheckDigit":true,"role":"PrimaryKey"}
 ]
