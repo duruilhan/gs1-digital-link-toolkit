@@ -28,6 +28,20 @@ Digital Link adres ayrıştırıcısı, AI 01 için 12 haneli geçerli bir GTIN 
 
 Yalnızca resmî örnekte kullanılan küçük harfli `gtin` ve `lot` yol adları desteklenir ve sırasıyla 01 ile 10'a çevrilir. Katalogdaki bütün AI'lar için tahmine dayalı adlar eklenmedi; belgelenmemiş adların sessizce yanlış AI'a eşlenmesini önlemek için diğer adlar reddedilir.
 
+Bu kısa adlar GS1 Digital Link standardının 1.2 sürümünde kullanımdan kaldırılmış, 1.3.0 sürümünde standarttan tamamen çıkarılmıştır. Destek, yeni adres üretimini teşvik etmek için değil, eski adreslerle geriye dönük uyumluluğu bilinçli olarak korumak için sürdürülür.
+
+### Karşılaştırma kaynağının niteliği
+
+Fark testinde kullanılan `Solidsoft.Reply.Gs1DigitalLinkLib`, bağımsız bir ikinci standart uygulaması değil, GS1'in JavaScript referansının .NET'e çevrilmiş hâlidir. Bu nedenle iki uygulamanın aynı sonucu vermesi iki bağımsız onay sayılmaz; referans çevirisiyle karşılaştırmada bulunan ayrımlar ise çeviri veya kapsam farklarını görünür kılan tanısal bulgulardır.
+
+Fark testi `Gs1.DigitalLink.DifferentialTests` adlı ayrı projede tutulur ve sabit `20260908` tohumu ile 75 geçerli girdi üretir. Her girdide iki URI metnini karşılaştırır, ayrımları test çıktısına kaydeder ve ayrım bulduğunda normal testleri kırmaz. Böylece çözümdeki olağan `dotnet test` ve GitHub Actions akışı yeşil kalır. Tanısal test gerektiğinde ayrıca şu komutla çalıştırılır:
+
+```text
+dotnet test Gs1.DigitalLink.DifferentialTests/Gs1.DigitalLink.DifferentialTests.csproj --logger "console;verbosity=detailed"
+```
+
+İlk temiz karşılaştırma koşusunda 75 girdinin 37'sinde metinsel fark kaydedildi. Gözlenen farklar sorgu parametrelerinin sıralamasıyla sınırlıydı; yol bölümleri, AI/değer eşleşmeleri ve yüzde kodlanmış değerler aynı kaldı. Görev gereği bu farklara dayanarak hiçbir uygulama davranışı değiştirilmedi.
+
 ## Desteklenen kapsam
 
 - JSON kataloğunda tanımlı AI'lar için biçim ve kontrol hanesi doğrulaması
