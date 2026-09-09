@@ -10,7 +10,7 @@ public sealed class DigitalLinkDifferentialTests(ITestOutputHelper output)
     public void Build_WithSeededInputs_RecordsDifferencesFromReferencePort()
     {
         const int seed = 20260908;
-        const int inputCount = 75;
+        const int inputCount = 2_000;
         var random = new Random(seed);
         var differences = new List<string>();
 

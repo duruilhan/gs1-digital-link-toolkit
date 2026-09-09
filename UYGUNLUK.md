@@ -34,13 +34,24 @@ Bu kısa adlar GS1 Digital Link standardının 1.2 sürümünde kullanımdan kal
 
 Fark testinde kullanılan `Solidsoft.Reply.Gs1DigitalLinkLib`, bağımsız bir ikinci standart uygulaması değil, GS1'in JavaScript referansının .NET'e çevrilmiş hâlidir. Bu nedenle iki uygulamanın aynı sonucu vermesi iki bağımsız onay sayılmaz; referans çevirisiyle karşılaştırmada bulunan ayrımlar ise çeviri veya kapsam farklarını görünür kılan tanısal bulgulardır.
 
-Fark testi `Gs1.DigitalLink.DifferentialTests` adlı ayrı projede tutulur ve sabit `20260908` tohumu ile 75 geçerli girdi üretir. Her girdide iki URI metnini karşılaştırır, ayrımları test çıktısına kaydeder ve ayrım bulduğunda normal testleri kırmaz. Böylece çözümdeki olağan `dotnet test` ve GitHub Actions akışı yeşil kalır. Tanısal test gerektiğinde ayrıca şu komutla çalıştırılır:
+Fark testi `Gs1.DigitalLink.DifferentialTests` adlı ayrı projede tutulur ve sabit `20260908` tohumu ile 2.000 geçerli girdi üretir. Her girdide iki URI metnini karşılaştırır, ayrımları test çıktısına kaydeder ve ayrım bulduğunda normal testleri kırmaz. Böylece çözümdeki olağan `dotnet test` ve GitHub Actions akışı yeşil kalır. Tanısal test gerektiğinde ayrıca şu komutla çalıştırılır:
 
 ```text
 dotnet test Gs1.DigitalLink.DifferentialTests/Gs1.DigitalLink.DifferentialTests.csproj --logger "console;verbosity=detailed"
 ```
 
-İlk temiz karşılaştırma koşusunda 75 girdinin 37'sinde metinsel fark kaydedildi. Gözlenen farklar sorgu parametrelerinin sıralamasıyla sınırlıydı; yol bölümleri, AI/değer eşleşmeleri ve yüzde kodlanmış değerler aynı kaldı. Görev gereği bu farklara dayanarak hiçbir uygulama davranışı değiştirilmedi.
+İlk temiz karşılaştırma koşusunda 75 girdinin 37'sinde metinsel fark kaydedildi. Ölçek 2.000 girdiye çıkarıldığında 900 metinsel fark kaydedildi. Gözlenen farklar sorgu parametrelerinin sıralamasıyla sınırlıydı; yol bölümleri, AI/değer eşleşmeleri ve yüzde kodlanmış değerler aynı kaldı. Görev gereği bu farklara dayanarak hiçbir uygulama davranışı değiştirilmedi.
+
+## Sapma tablosu
+
+| Fark | Bizim kod | Referans kütüphane | Sonuç |
+| --- | --- | --- | --- |
+| Sorgu parametrelerinin sırası | Parametreleri AI koduna göre sözlük sırasında diziyor. | Parametrelerin girdi sırasını koruyor. | **Kütüphanede eksik.** GS1 Digital Link standardının 4.12 maddesi kanonik biçim için sözlük sırasını “should” ile önerir, “shall” ile zorunlu kılmaz. Referans kütüphane geçerli URI üretse de kanonik biçim üretmiyor. |
+| AI 11 ve 17 tarih anlamı | Önceden yalnızca `N6` uzunluk ve karakter biçimini denetliyordu; artık ayı, günü ve artık yılı da doğruluyor. | YYMMDD değerini takvim açısından doğruluyor. | **Bizde eksikti, giderildi.** AI 11 ve 17 yalnızca altı rakam değil, tarih anlamı taşıdığı için geçersiz takvim tarihleri reddedilmelidir. |
+
+### AI 11 ve 17 için `DD=00` kararı
+
+Genel amaçlı ve eski verilerle uyumlu kalması gereken bu kütüphane, `DD=00` değerini belirtilen ayın son günü anlamındaki eski GS1 gösterimi olarak kabul eder. Ay yine 01–12 aralığında olmak zorundadır. 1 Ocak 2025 sonrasında düzenlemeye tabi sağlık ürünlerinde gerçek bir gün yazılması gerekliliği uygulama katmanının bağlama özgü doğrulaması olarak bırakılmıştır; genel kütüphanede eski veriyi tüm alanlarda geçersiz kılmak geriye dönük uyumluluğu gereksiz yere bozar.
 
 ## Desteklenen kapsam
 
