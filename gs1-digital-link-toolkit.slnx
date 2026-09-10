@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="Gs1.DigitalLink.Tests/Gs1.DigitalLink.Tests.csproj" />
+  <Project Path="Gs1.DigitalLink.Resolver/Gs1.DigitalLink.Resolver.csproj" />
+  <Project Path="Gs1.DigitalLink.Resolver.Migrator/Gs1.DigitalLink.Resolver.Migrator.csproj" />
   <Project Path="Gs1.DigitalLink/Gs1.DigitalLink.csproj" />
 </Solution>

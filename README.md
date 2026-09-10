@@ -22,6 +22,14 @@ dotnet test --no-build
 
 Every push and pull request also runs the build and test suite through GitHub Actions.
 
+## Resolver data model
+
+The resolver uses a hybrid relational model. `LinkDefinition.CanonicalPath` is the unique identity used for exact lookups, while ordered AI/value pairs are also stored in `LinkIdentifier` rows for identifier-based queries. Each definition can have multiple `LinkTarget` rows with a link type, destination URL, optional language and media type, and a default marker.
+
+The PostgreSQL connection string is never stored in source control. Set it through the `GS1_RESOLVER_CONNECTION_STRING` environment variable before applying the included migration through `ResolverDatabase.MigrateAsync`. The initial migration seeds the three sample definitions and their targets.
+
+Resolver repository tests use EF Core's in-memory provider so the normal GitHub Actions workflow does not require a PostgreSQL service. The migration and PostgreSQL model are checked separately without opening a database connection.
+
 ## Design decisions
 
 ### Building a Digital Link
