@@ -50,7 +50,20 @@ public sealed class ResolverRepositoryTests
             .UseNpgsql("Host=localhost;Database=unused;Username=unused;Password=unused")
             .Options;
         using var context = new ResolverDbContext(options);
-        Assert.Contains("202609100001_InitialResolverSchema", context.Database.GetMigrations());
+        Assert.Contains(context.Database.GetMigrations(), migration =>
+            migration.EndsWith("_InitialResolverSchema", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void PostgreSqlModel_GeneratesDefaultTargetAndMediaTypeUniquenessIndexes()
+    {
+        var options = new DbContextOptionsBuilder<ResolverDbContext>()
+            .UseNpgsql("Host=localhost;Database=unused;Username=unused;Password=unused")
+            .Options;
+        using var context = new ResolverDbContext(options);
+        string sql = context.Database.GenerateCreateScript();
+        Assert.Contains("\"LinkDefinitionId\", \"LinkType\", \"Language\", \"MediaType\"", sql);
+        Assert.Contains("WHERE \"IsDefault\" = TRUE", sql);
     }
     private static ResolverDbContext CreateContext()
     {
