@@ -3,6 +3,7 @@ using System;
 using Gs1.DigitalLink.Resolver;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Gs1.DigitalLink.Resolver.Migrations
 {
     [DbContext(typeof(ResolverDbContext))]
-    partial class ResolverDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260914121615_EnforceTargetNullUniqueness")]
+    partial class EnforceTargetNullUniqueness
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

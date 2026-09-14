@@ -2,6 +2,7 @@ using Gs1.DigitalLink;
 using Gs1.DigitalLink.Resolver;
 using Gs1.DigitalLink.Resolver.Api;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Net.Http.Headers;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -118,6 +119,43 @@ definitions.MapDelete("/{id:guid}", async (Guid id, ResolverRepository repositor
     .Produces(StatusCodes.Status204NoContent)
     .Produces(StatusCodes.Status404NotFound);
 
+app.MapGet("/{**digitalLinkPath}", async (
+    HttpContext context,
+    ResolverRepository repository,
+    CancellationToken cancellationToken) =>
+{
+    string path = context.Request.Path.Value ?? string.Empty;
+    if (!Gs1DigitalLinkParser.TryParse("https://id.gs1.org" + path, out _))
+        return Results.BadRequest(new { error = "The path is not a valid GS1 Digital Link path." });
+
+    LinkDefinition? definition = await repository.GetByCanonicalPathAsync(path, cancellationToken);
+    if (definition is null)
+        return Results.NotFound();
+
+    string? linkType = context.Request.Query["linkType"].FirstOrDefault();
+    if (string.Equals(linkType, "all", StringComparison.OrdinalIgnoreCase))
+        return Results.Ok(definition.ToResponse());
+
+    LinkTarget? target = TargetSelector.Select(
+        definition.Targets,
+        linkType,
+        context.Request.Headers.AcceptLanguage.ToString(),
+        context.Request.Headers.Accept.ToString());
+    if (target is null)
+        return Results.StatusCode(StatusCodes.Status406NotAcceptable);
+
+    context.Response.Headers.Append(HeaderNames.Link, definition.Targets.Select(LinkHeaders.Format).ToArray());
+    return Results.Redirect(target.Url, permanent: false, preserveMethod: true);
+})
+.WithTags("Resolution")
+.WithSummary("Resolve a GS1 Digital Link path")
+.WithDescription("Returns a 307 redirect to the selected target. Use linkType=all to return every target without redirecting.")
+.Produces(StatusCodes.Status307TemporaryRedirect)
+.Produces<DefinitionResponse>()
+.Produces(StatusCodes.Status400BadRequest)
+.Produces(StatusCodes.Status404NotFound)
+.Produces(StatusCodes.Status406NotAcceptable);
+
 app.Run();
 
 public partial class Program;
@@ -135,3 +173,19 @@ internal static class ResponseMappings
 public sealed record ElementResponse(string ApplicationIdentifier, string Value);
 public sealed record TargetResponse(string LinkType, string Url, string? Language, string? MediaType, bool IsDefault);
 public sealed record DefinitionResponse(Guid Id, string CanonicalPath, IReadOnlyList<ElementResponse> Elements, IReadOnlyList<TargetResponse> Targets);
+
+internal static class LinkHeaders
+{
+    internal static string Format(LinkTarget target)
+    {
+        string relation = target.LinkType.StartsWith("gs1:", StringComparison.OrdinalIgnoreCase)
+            ? "https://gs1.org/voc/" + target.LinkType[4..]
+            : target.LinkType;
+        string value = $"<{target.Url}>; rel=\"{relation}\"";
+        if (!string.IsNullOrWhiteSpace(target.Language))
+            value += $"; hreflang=\"{target.Language}\"";
+        if (!string.IsNullOrWhiteSpace(target.MediaType))
+            value += $"; type=\"{target.MediaType}\"";
+        return value;
+    }
+}

@@ -12,6 +12,76 @@ namespace Gs1.DigitalLink.Resolver.Api.Tests;
 public sealed class ResolverApiTests
 {
     [Fact]
+    public async Task Resolve_DefaultTarget_ReturnsTemporaryRedirectAndLinkHeaders()
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = CreateNonRedirectingClient(factory);
+        HttpResponseMessage response = await client.GetAsync("/01/08690504080008");
+        Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
+        Assert.Equal("https://example.com/products/08690504080008", response.Headers.Location!.ToString());
+        Assert.Equal(3, response.Headers.GetValues("Link").Count());
+        Assert.Contains(response.Headers.GetValues("Link"), value =>
+            value.Contains("rel=\"https://gs1.org/voc/defaultLink\"") && value.Contains("type=\"text/html\""));
+    }
+    [Theory]
+    [InlineData("tr", "https://example.com/tr/products/08690504080008")]
+    [InlineData("en", "https://example.com/en/products/08690504080008")]
+    public async Task Resolve_LinkTypeAndLanguage_SelectMatchingTarget(string language, string expectedLocation)
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = CreateNonRedirectingClient(factory);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/01/08690504080008?linkType=gs1:pip");
+        request.Headers.AcceptLanguage.ParseAdd(language);
+        HttpResponseMessage response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
+        Assert.Equal(expectedLocation, response.Headers.Location!.ToString());
+    }
+    [Fact]
+    public async Task Resolve_UnsupportedLanguage_FallsBackToDefaultTarget()
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = CreateNonRedirectingClient(factory);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/01/08690504080008?linkType=gs1:pip");
+        request.Headers.AcceptLanguage.ParseAdd("de");
+        HttpResponseMessage response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
+        Assert.Equal("https://example.com/products/08690504080008", response.Headers.Location!.ToString());
+    }
+    [Fact]
+    public async Task Resolve_All_ReturnsEveryTargetWithoutRedirecting()
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = factory.CreateClient();
+        HttpResponseMessage response = await client.GetAsync("/01/08690504080008?linkType=all");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(3, (await response.Content.ReadFromJsonAsync<DefinitionResponse>())!.Targets.Count);
+        Assert.Null(response.Headers.Location);
+    }
+    [Fact]
+    public async Task Resolve_QualifiedDefinitionWithSingleTarget_ReturnsTemporaryRedirect()
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = CreateNonRedirectingClient(factory);
+        HttpResponseMessage response = await client.GetAsync("/01/08690504080008/10/LOT123");
+        Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
+        Assert.Equal("https://example.com/tr/products/08690504080008/lots/LOT123", response.Headers.Location!.ToString());
+    }
+    [Fact]
+    public async Task Resolve_MissingQualifiedDefinition_DoesNotFallBackToLessQualifiedRecord()
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = CreateNonRedirectingClient(factory);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await client.GetAsync("/01/08690504080008/21/YOKBOYLE9")).StatusCode);
+    }
+    [Fact]
+    public async Task Resolve_MalformedOddSegmentPath_ReturnsBadRequest()
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = CreateNonRedirectingClient(factory);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/01/8690504080008")).StatusCode);
+    }
+    [Fact]
     public async Task Post_CreatesCanonicalPathAndReturnsLocation()
     {
         await using var factory = new ResolverApiFactory();
@@ -108,6 +178,8 @@ public sealed class ResolverApiTests
     }
     private static CreateDefinitionRequest CreateRequest(IReadOnlyList<ElementRequest> elements, string url) =>
         new(elements, [new TargetRequest("gs1:pip", url, "tr", "text/html", true)]);
+    private static HttpClient CreateNonRedirectingClient(ResolverApiFactory factory) =>
+        factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 }
 internal sealed class ResolverApiFactory : WebApplicationFactory<Program>
 {

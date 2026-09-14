@@ -1,5 +1,7 @@
 using Gs1.DigitalLink.Resolver;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 namespace Gs1.DigitalLink.Tests;
 public sealed class ResolverRepositoryTests
 {
@@ -53,18 +55,39 @@ public sealed class ResolverRepositoryTests
         Assert.Contains(context.Database.GetMigrations(), migration =>
             migration.EndsWith("_InitialResolverSchema", StringComparison.Ordinal));
     }
-
     [Fact]
-    public void PostgreSqlModel_GeneratesDefaultTargetAndMediaTypeUniquenessIndexes()
+    public void PostgreSqlMigrations_GenerateDefaultAndNullSafeTargetUniquenessIndexes()
     {
         var options = new DbContextOptionsBuilder<ResolverDbContext>()
             .UseNpgsql("Host=localhost;Database=unused;Username=unused;Password=unused")
             .Options;
         using var context = new ResolverDbContext(options);
-        string sql = context.Database.GenerateCreateScript();
+        string sql = context.GetService<IMigrator>().GenerateScript();
         Assert.Contains("\"LinkDefinitionId\", \"LinkType\", \"Language\", \"MediaType\"", sql);
+        Assert.Contains("NULLS NOT DISTINCT", sql);
         Assert.Contains("WHERE \"IsDefault\" = TRUE", sql);
     }
+    [Fact]
+    public void TargetSelector_UsesPreferencesThenDefaultAndRejectsAmbiguityWithoutDefault()
+    {
+        LinkTarget defaultTarget = Target("gs1:defaultLink", null, "text/html", true);
+        LinkTarget turkish = Target("gs1:pip", "tr", "text/html");
+        LinkTarget englishJson = Target("gs1:pip", "en", "application/json");
+        LinkTarget[] targets = [defaultTarget, turkish, englishJson];
+        Assert.Same(turkish, TargetSelector.Select(targets, "gs1:pip", "tr", "text/html"));
+        Assert.Same(englishJson, TargetSelector.Select(targets, "gs1:pip", "en", "application/json"));
+        Assert.Same(defaultTarget, TargetSelector.Select(targets, "gs1:pip", "de", "text/html"));
+        Assert.Null(TargetSelector.Select([turkish, englishJson], null, null, null));
+    }
+    private static LinkTarget Target(string linkType, string? language, string? mediaType, bool isDefault = false) => new()
+    {
+        Id = Guid.NewGuid(),
+        LinkType = linkType,
+        Url = "https://example.com/target",
+        Language = language,
+        MediaType = mediaType,
+        IsDefault = isDefault
+    };
     private static ResolverDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ResolverDbContext>()
