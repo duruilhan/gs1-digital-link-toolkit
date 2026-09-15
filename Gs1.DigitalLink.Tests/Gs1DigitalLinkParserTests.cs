@@ -79,5 +79,16 @@ namespace Gs1.DigitalLink.Tests
             Assert.Equal(Gs1DigitalLinkBuilder.Build(input), Gs1DigitalLinkBuilder.Build(parsed));
         }
 
+        [Fact]
+        public void CompressedParser_WithReferenceGeneratedUri_ReturnsExpectedElements()
+        {
+            const string compressed = "https://id.gs1.org/AXSIeeGEJkMNvw5caWCSBMLtM1lx9d2m10w5rPS3thk8lqVts4g";
+
+            Assert.True(Gs1CompressedDigitalLinkParser.TryParse(compressed, out var elements));
+            Assert.Equal(
+                "01=64064754598419|21=oaec%A|240=.iM2qzw4m:0s,z-vaIr-%6lq",
+                Describe(elements));
+        }
+
     }
 }

@@ -23,6 +23,17 @@ public sealed class ResolverApiTests
         Assert.Contains(response.Headers.GetValues("Link"), value =>
             value.Contains("rel=\"https://gs1.org/voc/defaultLink\"") && value.Contains("type=\"text/html\""));
     }
+    [Fact]
+    public async Task Resolve_CompressedPath_ReturnsTemporaryRedirect()
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = CreateNonRedirectingClient(factory);
+
+        HttpResponseMessage response = await client.GetAsync("/AQ_O1NE1EA");
+
+        Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
+        Assert.Equal("https://example.com/products/08690504080008", response.Headers.Location!.ToString());
+    }
     [Theory]
     [InlineData("tr", "https://example.com/tr/products/08690504080008")]
     [InlineData("en", "https://example.com/en/products/08690504080008")]
@@ -46,6 +57,33 @@ public sealed class ResolverApiTests
         HttpResponseMessage response = await client.SendAsync(request);
         Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
         Assert.Equal("https://example.com/products/08690504080008", response.Headers.Location!.ToString());
+    }
+
+    [Fact]
+    public async Task Resolve_LinkTypeWithoutLanguage_HonorsRequestedLinkType()
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = CreateNonRedirectingClient(factory);
+        HttpResponseMessage response = await client.GetAsync("/01/08690504080008?linkType=gs1:pip");
+        Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
+        Assert.Equal("https://example.com/en/products/08690504080008", response.Headers.Location!.ToString());
+    }
+
+    [Fact]
+    public async Task Resolve_PercentEncodedPathMatchesStoredCanonicalPath()
+    {
+        await using var factory = new ResolverApiFactory();
+        using HttpClient client = CreateNonRedirectingClient(factory);
+        var request = CreateRequest(
+            [new("01", "08690504080008"), new("10", "50%")],
+            "https://example.com/percent");
+        HttpResponseMessage created = await client.PostAsJsonAsync("/definitions", request);
+        DefinitionResponse definition = (await created.Content.ReadFromJsonAsync<DefinitionResponse>())!;
+
+        Assert.Equal("/01/08690504080008/10/50%25", definition.CanonicalPath);
+        HttpResponseMessage resolved = await client.GetAsync(definition.CanonicalPath);
+        Assert.Equal(HttpStatusCode.TemporaryRedirect, resolved.StatusCode);
+        Assert.Equal("https://example.com/percent", resolved.Headers.Location!.ToString());
     }
     [Fact]
     public async Task Resolve_All_ReturnsEveryTargetWithoutRedirecting()

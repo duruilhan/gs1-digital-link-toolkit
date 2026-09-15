@@ -59,6 +59,7 @@ Genel amaçlı ve eski verilerle uyumlu kalması gereken bu kütüphane, `DD=00`
 - Parantezli ve ham element string ayrıştırma
 - GS ayırıcısıyla değişken uzunluklu ham alanlar
 - Sıkıştırılmamış Digital Link URI üretme ve ayrıştırma
+- Tam sıkıştırılmış Digital Link URI'ları çözerek doğrulanmış AI/değer listesine dönüştürme
 - Birincil anahtar, GTIN nitelendiricisi ve veri özniteliği rolleri
 - Kanonik nitelendirici sırası ve deterministik sorgu sırası
 - URI değerlerinde yüzde kodlama ve kod çözme
@@ -69,9 +70,13 @@ Genel amaçlı ve eski verilerle uyumlu kalması gereken bu kütüphane, `DD=00`
 
 - Katalogda bulunmayan GS1 AI'ları
 - `gtin` ve `lot` dışındaki kısa yol adları
-- Sıkıştırılmış Digital Link URI biçimleri
+- Kısmen sıkıştırılmış URI'lar, GS1 dışı anahtar/değer çiftleri ve desteklenen katalog dışındaki sıkıştırma başlıkları
 - Digital Link resolver veya ağ üzerinden kaynak çözümleme
 - Tüm GS1 ilişki ve kombinasyon kuralları
 - Para birimi gibi katalogda ayrı metadata gerektiren daha geniş iş kuralları
 
 Desteklenmeyen girdiler tahmin edilerek dönüştürülmez; doğrulama veya ayrıştırma hatası olarak bildirilir. Bu yaklaşım, geçerli görünmesine rağmen anlamı değişmiş veri üretmekten kaçınmak için seçildi.
+
+## Sıkıştırılmış adres çözme ölçümü
+
+`Solidsoft.Reply.Gs1DigitalLinkLib` ile üretilen tam sıkıştırılmış adresler, sabit `20260915` tohumu kullanılarak 500 geçerli rastgele AI/değer listesiyle denendi. Kütüphanenin mevcut test veri üreticisinin kapsadığı AI'larda 500 girdinin tamamı doğru çözüldü; çözülemeyen girdi ve kaydedilecek hata nedeni oluşmadı. Bu sonuç yalnızca katalogdaki mevcut AI'ları ve uygulanan tam sıkıştırma başlıklarını kapsar; kısmi sıkıştırma ve GS1 dışı çiftler destek kapsamı dışındadır.

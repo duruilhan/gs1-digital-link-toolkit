@@ -6,7 +6,7 @@ GS1 Digital Link connects GS1 identifiers, such as GTINs and GLNs, to web-access
 
 This .NET library provides the foundations for working with those identifiers. It calculates and validates GS1 check digits, identifies possible GS1 key types by length, loads Application Identifier (AI) definitions from a JSON catalog, validates AI values against their length, character-set, and check-digit rules, and parses both parenthesized and raw GS1 element strings into ordered AI/value pairs.
 
-It also builds uncompressed Digital Link URLs from validated AI/value pairs for the supported catalog. It is not a complete implementation of every GS1 AI or association rule.
+It also builds uncompressed Digital Link URLs and decodes the supported fully compressed Digital Link form into validated AI/value pairs. It is not a complete implementation of every GS1 AI, compression form, or association rule.
 
 ## Build and test
 
@@ -36,7 +36,7 @@ Resolver repository and HTTP endpoint tests use EF Core's in-memory provider so 
 
 Every other valid Digital Link path is resolved with an exact canonical-path lookup. A missing qualified definition returns `404`; the resolver does not silently fall back to a less-qualified record because qualifiers identify a different resource. An invalid path returns `400`.
 
-Target selection applies the requested `linkType`, then `Accept-Language`, then the `Accept` media type. Header preferences and quality values are respected. If a requested preference cannot be satisfied, the definition's default target is used. With no preferences the default is used, or the sole target when a definition has exactly one. If selection is ambiguous and no default exists, the response is `406 Not Acceptable`. A selected target is returned as a `307 Temporary Redirect`.
+Target selection applies the requested `linkType`, then `Accept-Language`, then the `Accept` media type. Header preferences and quality values are respected. When an explicit `linkType` leaves several targets and no language or media preference is supplied, the requested type is still honored and a deterministic target is selected (a language-neutral target first, then language, media type, and URL in ordinal order). If a requested language or media preference cannot be satisfied, the definition's default target is used. With no preferences the default is used, or the sole target when a definition has exactly one. If selection is ambiguous and no default exists, the response is `406 Not Acceptable`. A selected target is returned as a `307 Temporary Redirect`.
 
 Passing `linkType=all` returns the definition and all targets as JSON without redirecting. Redirect responses also advertise every available target in RFC 8288 `Link` fields using an absolute GS1 vocabulary relation URI plus optional `hreflang` and `type` parameters, for example `<https://example.com/tr/product>; rel="https://gs1.org/voc/pip"; hreflang="tr"; type="text/html"`.
 

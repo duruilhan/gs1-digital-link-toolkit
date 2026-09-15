@@ -1,5 +1,4 @@
 namespace Gs1.DigitalLink.Resolver;
-
 public static class TargetSelector
 {
     public static LinkTarget? Select(
@@ -10,10 +9,8 @@ public static class TargetSelector
     {
         if (targets.Count == 0)
             return null;
-
         LinkTarget? defaultTarget = targets.SingleOrDefault(target => target.IsDefault);
         IEnumerable<LinkTarget> candidates = targets;
-
         if (!string.IsNullOrWhiteSpace(linkType))
         {
             LinkTarget[] matchingLinkType = candidates
@@ -23,7 +20,6 @@ public static class TargetSelector
                 return defaultTarget;
             candidates = matchingLinkType;
         }
-
         string[] languages = ParsePreferences(acceptLanguage);
         if (languages.Length > 0)
         {
@@ -35,7 +31,6 @@ public static class TargetSelector
                 return defaultTarget;
             candidates = matchingLanguage;
         }
-
         string[] mediaTypes = ParsePreferences(accept);
         if (mediaTypes.Length > 0)
         {
@@ -47,12 +42,16 @@ public static class TargetSelector
                 return defaultTarget;
             candidates = matchingMediaType;
         }
-
-        LinkTarget[] remaining = candidates.ToArray();
+        LinkTarget[] remaining = candidates
+            .OrderBy(target => target.Language is null ? 0 : 1)
+            .ThenBy(target => target.Language, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(target => target.MediaType, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(target => target.Url, StringComparer.Ordinal)
+            .ToArray();
         return remaining.FirstOrDefault(target => target.IsDefault)
+            ?? (remaining.Length > 0 && !string.IsNullOrWhiteSpace(linkType) ? remaining[0] : null)
             ?? (remaining.Length == 1 ? remaining[0] : defaultTarget);
     }
-
     private static string[] ParsePreferences(string? header) => string.IsNullOrWhiteSpace(header)
         ? []
         : header.Split(',')
@@ -79,7 +78,6 @@ public static class TargetSelector
         requested == "*" ||
         string.Equals(requested, available, StringComparison.OrdinalIgnoreCase) ||
         requested.StartsWith(available + "-", StringComparison.OrdinalIgnoreCase);
-
     private static bool MediaTypeMatches(string requested, string available)
     {
         if (requested == "*/*" || string.Equals(requested, available, StringComparison.OrdinalIgnoreCase))

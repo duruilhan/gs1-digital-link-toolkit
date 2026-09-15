@@ -124,9 +124,15 @@ app.MapGet("/{**digitalLinkPath}", async (
     ResolverRepository repository,
     CancellationToken cancellationToken) =>
 {
-    string path = context.Request.Path.Value ?? string.Empty;
-    if (!Gs1DigitalLinkParser.TryParse("https://id.gs1.org" + path, out _))
+    string path = context.Request.Path.ToUriComponent();
+    IReadOnlyList<Gs1Element>? compressedElements = null;
+    bool isUncompressed = Gs1DigitalLinkParser.TryParse("https://id.gs1.org" + path, out _);
+    if (!isUncompressed &&
+        !Gs1CompressedDigitalLinkParser.TryParse("https://id.gs1.org" + path, out compressedElements))
         return Results.BadRequest(new { error = "The path is not a valid GS1 Digital Link path." });
+
+    if (compressedElements is not null)
+        path = new Uri(Gs1DigitalLinkBuilder.Build(compressedElements)).AbsolutePath;
 
     LinkDefinition? definition = await repository.GetByCanonicalPathAsync(path, cancellationToken);
     if (definition is null)
