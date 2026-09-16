@@ -46,7 +46,7 @@ dotnet test Gs1.DigitalLink.DifferentialTests/Gs1.DigitalLink.DifferentialTests.
 
 | Fark | Bizim kod | Referans kütüphane | Sonuç |
 | --- | --- | --- | --- |
-| Sorgu parametrelerinin sırası | Parametreleri AI koduna göre sözlük sırasında diziyor. | Parametrelerin girdi sırasını koruyor. | **Kütüphanede eksik.** GS1 Digital Link standardının 4.12 maddesi kanonik biçim için sözlük sırasını “should” ile önerir, “shall” ile zorunlu kılmaz. Referans kütüphane geçerli URI üretse de kanonik biçim üretmiyor. |
+| Sorgu parametrelerinin sırası | Parametreleri AI koduna göre sözlük sırasında diziyor. | Parametrelerin girdi sırasını koruyor. | **Standart belirsiz.** GS1 Digital Link standardının 4.12 maddesi kanonik biçim için sözlük sırasını “should” ile önerir, “shall” ile zorunlu kılmaz. Bu nedenle referansın girdi sırasını koruması geçersiz değildir; iki yaklaşım arasında zorunlu bir doğru/yanlış ayrımı yoktur. |
 | AI 11 ve 17 tarih anlamı | Önceden yalnızca `N6` uzunluk ve karakter biçimini denetliyordu; artık ayı, günü ve artık yılı da doğruluyor. | YYMMDD değerini takvim açısından doğruluyor. | **Bizde eksikti, giderildi.** AI 11 ve 17 yalnızca altı rakam değil, tarih anlamı taşıdığı için geçersiz takvim tarihleri reddedilmelidir. |
 
 ### AI 11 ve 17 için `DD=00` kararı
@@ -80,3 +80,12 @@ Desteklenmeyen girdiler tahmin edilerek dönüştürülmez; doğrulama veya ayr�
 ## Sıkıştırılmış adres çözme ölçümü
 
 `Solidsoft.Reply.Gs1DigitalLinkLib` ile üretilen tam sıkıştırılmış adresler, sabit `20260915` tohumu kullanılarak 500 geçerli rastgele AI/değer listesiyle denendi. Kütüphanenin mevcut test veri üreticisinin kapsadığı AI'larda 500 girdinin tamamı doğru çözüldü; çözülemeyen girdi ve kaydedilecek hata nedeni oluşmadı. Bu sonuç yalnızca katalogdaki mevcut AI'ları ve uygulanan tam sıkıştırma başlıklarını kapsar; kısmi sıkıştırma ve GS1 dışı çiftler destek kapsamı dışındadır.
+
+## Bilinen sınırlar
+
+1. AI 10 değeri `LOT/1` olan bir tanım oluşturulduğunda eğik çizgi yol ayırıcısı olarak değil `%2F` olarak kodlanır. Kaydedilen `/01/08690504080008/10/LOT%2F1` yolu aynı biçimde istekle geldiğinde kayıt bulundu ve `307` yönlendirmesi döndü. Bu denemede yol eşleşmesi sorunu görülmedi.
+2. Test verisi üreticisinin karakter kümesi `CSET 82` içindeki çift tırnak, tek tırnak, açma parantezi, kapama parantezi ve yıldızı üretmez. Bu nedenle 2.000 girdilik fark testi ve 500 girdilik sıkıştırma çözme testi bu beş karakter için kanıt oluşturmaz; `500/500` sonucu bu sınırla birlikte değerlendirilmelidir.
+3. Hedef dili `tr-TR`, istek başlığı `Accept-Language: tr` olduğunda mevcut eşleştirme iki yönlü değildir: `tr`, `tr-TR` ile eşleşmez ve seçim varsayılan hedefe düşer. Ters yönde, daha ayrıntılı istek dili daha genel hedef dili kapsayabilir.
+4. Açıkça istenen bağlantı tipi için dil veya medya tipi eşleşmezse seçim, tanımın varsayılan hedefine düşer. Varsayılan hedef farklı bir bağlantı tipine sahip olabilir; bu bilinçli geri dönüş davranışıdır.
+5. Tam sıkıştırılmış Digital Link çözümleyicisindeki başlık tablosu, standardın bütün başlık ve AI birleşimlerini değil, mevcut katalog ve test verisinin kullandığı kümeyi kapsar.
+6. Sıkıştırılmış Digital Link desteği yalnızca çözme yönündedir; kütüphane sıkıştırılmış URI üretmez.
