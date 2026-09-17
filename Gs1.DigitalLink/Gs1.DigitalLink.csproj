@@ -4,6 +4,16 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>Gs1.DigitalLink</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Duru Ilhan</Authors>
+    <Description>.NET library for validating GS1 Application Identifiers and building or parsing GS1 Digital Link URIs.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/duruilhan/gs1-digital-link-toolkit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/duruilhan/gs1-digital-link-toolkit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>gs1;digital-link;barcode;gtin</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +21,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

@@ -40,7 +40,7 @@ Fark testi `Gs1.DigitalLink.DifferentialTests` adlı ayrı projede tutulur ve sa
 dotnet test Gs1.DigitalLink.DifferentialTests/Gs1.DigitalLink.DifferentialTests.csproj --logger "console;verbosity=detailed"
 ```
 
-İlk temiz karşılaştırma koşusunda 75 girdinin 37'sinde metinsel fark kaydedildi. Ölçek 2.000 girdiye çıkarıldığında 900 metinsel fark kaydedildi. Gözlenen farklar sorgu parametrelerinin sıralamasıyla sınırlıydı; yol bölümleri, AI/değer eşleşmeleri ve yüzde kodlanmış değerler aynı kaldı. Görev gereği bu farklara dayanarak hiçbir uygulama davranışı değiştirilmedi.
+İlk temiz karşılaştırma koşusunda 75 girdinin 37'sinde metinsel fark kaydedildi. Ölçek 2.000 girdiye çıkarıldığında 900 metinsel fark kaydedildi. Gözlenen farklar sorgu parametrelerinin sıralamasıyla sınırlıydı; yol bölümleri, AI/değer eşleşmeleri ve yüzde kodlanmış değerler aynı kaldı. Görev gereği bu farklara dayanarak hiçbir uygulama davranışı değiştirilmedi. Bu ölçüm 15.09.2026 tarihinde `d05ebd2` commit'i üzerinde alındı. Referans test projesinin geçici NuGet önbelleği eksik olduğu ve bu ortamda NuGet kaynağı SSL doğrulamasından geçmediği için yeniden derleme yapılamadı; bu nedenle rapordaki fark sayısı bu çalıştırılabilir sürüme aittir.
 
 ## Sapma tablosu
 
@@ -79,7 +79,11 @@ Desteklenmeyen girdiler tahmin edilerek dönüştürülmez; doğrulama veya ayr�
 
 ## Sıkıştırılmış adres çözme ölçümü
 
-`Solidsoft.Reply.Gs1DigitalLinkLib` ile üretilen tam sıkıştırılmış adresler, sabit `20260915` tohumu kullanılarak 500 geçerli rastgele AI/değer listesiyle denendi. Kütüphanenin mevcut test veri üreticisinin kapsadığı AI'larda 500 girdinin tamamı doğru çözüldü; çözülemeyen girdi ve kaydedilecek hata nedeni oluşmadı. Bu sonuç yalnızca katalogdaki mevcut AI'ları ve uygulanan tam sıkıştırma başlıklarını kapsar; kısmi sıkıştırma ve GS1 dışı çiftler destek kapsamı dışındadır.
+`Solidsoft.Reply.Gs1DigitalLinkLib` ile üretilen tam sıkıştırılmış adresler, sabit `20260915` tohumu kullanılarak 500 geçerli rastgele AI/değer listesiyle denendi. Kütüphanenin mevcut test veri üreticisinin kapsadığı AI'larda 500 girdinin tamamı doğru çözüldü; çözülemeyen girdi ve kaydedilecek hata nedeni oluşmadı. Bu sonuç yalnızca katalogdaki mevcut AI'ları ve uygulanan tam sıkıştırma başlıklarını kapsar; kısmi sıkıştırma ve GS1 dışı çiftler destek kapsamı dışındadır. Ölçüm 15.09.2026 tarihinde `d05ebd2` commit'i üzerinde alındı.
+
+## Sıkıştırma uzunluk ölçümü
+
+Sabit `20260915` tohumu ile üretilen aynı 500 girdi için tam ve sıkıştırılmış URI uzunlukları karşılaştırıldı. Ortalama kısalma **%24,86** oldu. En az kısalan örnek **%13,43** ile 67 karakterden 58 karaktere düştü: `(01)17150572614010(10)HB(22)5xh6n&44dEV7HQVss2w`. En çok kısalan örnek **%36,25** ile 80 karakterden 51 karaktere düştü: `(17)210821(01)90567149172409(3103)804549(21)&=pX(11)280606`. Ölçüm 17.09.2026 tarihinde, işlevsel kodun bulunduğu `d05ebd2` commit'i derlemesinden alınmıştır.
 
 ## Bilinen sınırlar
 

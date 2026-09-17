@@ -22,6 +22,36 @@ dotnet test --no-build
 
 Every push and pull request also runs the build and test suite through GitHub Actions.
 
+## Install and use
+
+Build a local package with `dotnet pack Gs1.DigitalLink/Gs1.DigitalLink.csproj --configuration Release`. The resulting `.nupkg` file can be used as a local NuGet source, or the library can be referenced directly from the project.
+
+```csharp
+using Gs1.DigitalLink;
+
+string uri = Gs1DigitalLinkBuilder.Build([
+    new Gs1Element("01", "08690504080008"),
+    new Gs1Element("10", "LOT123")
+]);
+// https://id.gs1.org/01/08690504080008/10/LOT123
+```
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Library[Gs1.DigitalLink library\nvalidation, URI build/parse, decompression]
+    Api[Resolver API\ncreate, lookup, redirect]
+    Database[(PostgreSQL\ndefinitions and targets)]
+    Reference[Solidsoft reference library\ndifferential tests]
+    Api --> Database
+    Api --> Library
+    Reference --> Differential[Seeded differential tests]
+    Library --> Differential
+```
+
+The library is reusable without the resolver. The resolver API persists canonical Digital Link paths and targets in PostgreSQL, while the differential-test project compares library behavior with the reference implementation using reproducible generated inputs.
+
 ## Resolver data model
 
 The resolver uses a hybrid relational model. `LinkDefinition.CanonicalPath` is the unique identity used for exact lookups, while ordered AI/value pairs are also stored in `LinkIdentifier` rows for identifier-based queries. Each definition can have multiple `LinkTarget` rows with a link type, destination URL, optional language and media type, and a default marker. Target uniqueness includes definition, link type, language, and media type so the same relation and language can intentionally expose both `text/html` and `application/json`. PostgreSQL normally treats null values as distinct in a unique index, so the target index explicitly uses `NULLS NOT DISTINCT`; this prevents duplicate targets when optional language or media-type values are null. A filtered unique index allows at most one default target per definition.
