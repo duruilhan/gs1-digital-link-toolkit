@@ -22,6 +22,119 @@ dotnet test --no-build
 
 Every push and pull request also runs the build and test suite through GitHub Actions.
 
+## Fresh setup guide
+
+This guide starts from a new Windows machine. It does not assume that PostgreSQL, a local NuGet cache, or a previous database already exists.
+
+### 1. Install the prerequisites
+
+Install:
+
+- .NET 10 SDK
+- Git
+- PostgreSQL 16 or later
+
+During PostgreSQL installation, keep the PostgreSQL server running locally and remember the password selected for the `postgres` user.
+
+Verify the installations from PowerShell:
+
+```powershell
+dotnet --version
+git --version
+psql --version
+```
+
+### 2. Clone and verify the project
+
+```powershell
+git clone https://github.com/duruilhan/gs1-digital-link-toolkit.git
+cd gs1-digital-link-toolkit
+
+dotnet restore gs1-digital-link-toolkit.slnx
+dotnet build gs1-digital-link-toolkit.slnx --no-restore
+dotnet test gs1-digital-link-toolkit.slnx --no-build
+```
+
+The normal solution tests do not require PostgreSQL.
+
+### 3. Create the PostgreSQL database
+
+Open PostgreSQL's `psql` shell and connect using the `postgres` user.
+
+Create the resolver database:
+
+```sql
+CREATE DATABASE gs1_resolver;
+```
+
+Exit `psql` with:
+
+```text
+\q
+```
+
+### 4. Set the database connection string
+
+In the PowerShell session that will run the resolver:
+
+```powershell
+$env:GS1_RESOLVER_CONNECTION_STRING = "Host=localhost;Port=5432;Database=gs1_resolver;Username=postgres;Password=YOUR_PASSWORD"
+```
+
+Replace `YOUR_PASSWORD` with the password selected during PostgreSQL installation.
+
+This environment variable applies only to the current PowerShell session. If a new PowerShell window is opened, set it again before running the migrator or API.
+
+### 5. Apply the migration and seed data
+
+```powershell
+dotnet run --project Gs1.DigitalLink.Resolver.Migrator --configuration Release
+```
+
+A successful run applies the included EF Core migration and verifies the three seeded resolver definitions.
+
+### 6. Start the resolver API
+
+```powershell
+dotnet run --project Gs1.DigitalLink.Resolver.Api
+```
+
+With the included launch profile, the API runs at:
+
+```text
+http://localhost:5084
+```
+
+The interactive Scalar API documentation is available at:
+
+```text
+http://localhost:5084/scalar/v1
+```
+
+The OpenAPI document is available at:
+
+```text
+http://localhost:5084/openapi/v1.json
+```
+
+### 7. Run the differential tests
+
+`Gs1.DigitalLink.DifferentialTests` is intentionally separate from the normal solution test run because it compares this implementation with `Solidsoft.Reply.Gs1DigitalLinkLib`.
+
+Restore it separately:
+
+```powershell
+dotnet restore Gs1.DigitalLink.DifferentialTests/Gs1.DigitalLink.DifferentialTests.csproj
+```
+
+Then run:
+
+```powershell
+dotnet test Gs1.DigitalLink.DifferentialTests/Gs1.DigitalLink.DifferentialTests.csproj --logger "console;verbosity=detailed"
+```
+
+The reference dependency comes from NuGet.org. If restore reports a certificate or TLS validation error, do not rely on a partially populated local NuGet cache. Verify that the machine can reach NuGet.org with a valid trusted certificate chain, including any required corporate proxy certificate, and then repeat the restore.
+
 ## Install and use
 
 Build a local package with `dotnet pack Gs1.DigitalLink/Gs1.DigitalLink.csproj --configuration Release`. The resulting `.nupkg` file can be used as a local NuGet source, or the library can be referenced directly from the project.
